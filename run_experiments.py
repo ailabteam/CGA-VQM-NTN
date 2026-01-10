@@ -10,10 +10,10 @@ from src.cga_utils import CGAMapper
 from src.quantum_model import CGA_VQC, quantum_classifier
 
 # --- CONFIGURATION ---
-SCENARIOS = ['clean', 'noisy', 'rotated']
+SCENARIOS = ['noisy', 'clean', 'rotated']
 MODES = ['cga', 'raw']
-N_TRIALS = 5  
-EPOCHS = 50
+N_TRIALS = 3 
+EPOCHS = 20
 LR = 0.1
 N_SAMPLES = 50
 
