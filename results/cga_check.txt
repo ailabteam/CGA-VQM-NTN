@@ -1,0 +1,15 @@
+--- INVARIANCE CHECK: RAW 3D vs CGA 5D ---
+
+RAW 3D COORDINATES (Original vs Rotated):
+Original[0]: [0. 1. 0.]
+Rotated[0]:  [ 0.11590787  0.99050747 -0.07389393]
+Total Raw Difference: 3.3347
+
+CGA 5D COEFFICIENTS (Original vs Rotated):
+CGA Original[0]: [0. 1. 0. 0. 1.]
+CGA Rotated[0]:  [ 1.15907865e-01  9.90507473e-01 -7.38939252e-02  1.11022302e-16
+  1.00000000e+00]
+
+Original r^2: [1.     1.0625 1.25   1.5625 2.    ]
+Rotated r^2:  [1.     1.0625 1.25   1.5625 2.    ]
+r^2 Difference: 8.3081e-16
