@@ -8,28 +8,28 @@ class CGAMapper:
         self.e1 = self.blades['e1']
         self.e2 = self.blades['e2']
         self.e3 = self.blades['e3']
-        self.e4 = self.blades['e4'] # e+
-        self.e5 = self.blades['e5'] # e-
+        self.e4 = self.blades['e4']
+        self.e5 = self.blades['e5']
         
-        # Định nghĩa e_inf và e_o theo chuẩn lý thuyết Conformal
         self.e_inf = self.e4 + self.e5
         self.e_o = 0.5 * (self.e5 - self.e4)
 
     def point_to_cga(self, x, y, z):
-        """Ánh xạ điểm 3D (x,y,z) sang vector 5D trong CGA"""
-        p_euclidean = x*self.e1 + y*self.e2 + z*self.e3
-        r2 = x**2 + y**2 + z**2
+        """Ánh xạ điểm 3D sang vector 5D trong CGA"""
+        # CHỈNH SỬA TẠI ĐÂY: Ép kiểu x, y, z về float thuần túy để tránh lỗi PennyLane Tensor
+        x_f, y_f, z_f = float(x), float(y), float(z)
         
-        # Công thức: P = x + 0.5*r^2*e_inf + e_o
+        p_euclidean = x_f*self.e1 + y_f*self.e2 + z_f*self.e3
+        r2 = x_f**2 + y_f**2 + z_f**2
+        
         p_cga = p_euclidean + 0.5 * r2 * self.e_inf + self.e_o
         
-        # Trích xuất 5 hệ số từ multivector p_cga
-        # Dựa trên layout của bạn: index 1=e1, 2=e2, 3=e3, 4=e4, 5=e5
+        # p_cga.value là một mảng numpy chứa các hệ số của multivector
+        # Theo kết quả check_env: index 1=e1, 2=e2, 3=e3, 4=e4, 5=e5
         val = p_cga.value
         return np.array([val[1], val[2], val[3], val[4], val[5]])
 
     def batch_transform(self, X):
-        """Biến đổi tập dữ liệu (N_samples, N_points, 3) -> (N_samples, N_points, 5)"""
         N, T, _ = X.shape
         X_cga = np.zeros((N, T, 5))
         for i in range(N):

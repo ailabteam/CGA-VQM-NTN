@@ -1,0 +1,3 @@
+Scenario: rotated
+Final Accuracy CGA: 0.4917
+Final Accuracy Raw: 0.4250
