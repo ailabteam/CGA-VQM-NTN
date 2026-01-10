@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import pandas as pd
 import time, os
+from tqdm import tqdm # Thêm thư viện này
 from src.data_gen import create_scenario_data
 from src.cga_utils import CGAMapper
 from src.quantum_model import CGA_VQC, quantum_classifier
@@ -27,7 +28,7 @@ def get_accuracy(weights, bias, qnode, features, labels):
     pred_labels = [np.argmax(p[:3]) for p in predictions]
     return np.mean(np.array(pred_labels) == np.array(labels))
 
-def run_single_trial(mode, scenario, seed):
+def run_single_trial(mode, scenario, seed, pbar):
     np.random.seed(seed)
     X_raw, y = create_scenario_data(scenario, n_samples=N_SAMPLES)
     mapper = CGAMapper()
@@ -51,49 +52,63 @@ def run_single_trial(mode, scenario, seed):
     
     for _ in range(EPOCHS):
         weights, bias, _, _, _, _ = opt.step(cost_fn, weights, bias, qnode, features, y, n_qubits)
+        pbar.update(1) # Cập nhật thanh tiến trình sau mỗi Epoch
             
     return get_accuracy(weights, bias, qnode, features, y)
 
 if __name__ == "__main__":
-    raw_results = [] # Lưu dữ liệu thô để làm thống kê
+    raw_results = []
+    total_epochs = len(SCENARIOS) * len(MODES) * N_TRIALS * EPOCHS
     
-    print(f"Starting Professional Benchmark on {N_TRIALS} trials...")
-    
-    for sce in SCENARIOS:
-        for mode in MODES:
-            print(f"Scenario: {sce.upper()} | Mode: {mode.upper()}")
-            for s in range(N_TRIALS):
-                acc = run_single_trial(mode, sce, seed=s*42)
-                raw_results.append({'Scenario': sce, 'Method': mode, 'Trial': s, 'Accuracy': acc})
-                print(f"  > Trial {s}: {acc:.4f}")
+    print(f"Starting Professional Benchmark: {len(SCENARIOS)} Scenarios x {len(MODES)} Modes x {N_TRIALS} Trials")
+    print(f"Total Computation: {total_epochs} Quantum Epochs")
 
-    # 1. Chuyển đổi sang DataFrame để xử lý
+    # Khởi tạo thanh tiến trình tổng quát
+    with tqdm(total=total_epochs, desc="Overall Progress") as pbar:
+        for sce in SCENARIOS:
+            for mode in MODES:
+                for s in range(N_TRIALS):
+                    start_t = time.time()
+                    acc = run_single_trial(mode, sce, seed=s*42, pbar=pbar)
+                    end_t = time.time()
+                    
+                    raw_results.append({
+                        'Scenario': sce, 
+                        'Method': mode, 
+                        'Trial': s, 
+                        'Accuracy': acc,
+                        'Time': end_t - start_t
+                    })
+                    # In thông tin nhanh mỗi khi xong 1 trial
+                    tqdm.write(f" Done: {sce.upper()} | {mode.upper()} | Trial {s} | Acc: {acc:.4f} | Time: {end_t-start_t:.1f}s")
+
+    # --- PHẦN XỬ LÝ KẾT QUẢ GIỮ NGUYÊN ---
     df = pd.DataFrame(raw_results)
     stats = df.groupby(['Scenario', 'Method'])['Accuracy'].agg(['mean', 'std']).reset_index()
     
-    # 2. Xuất Table LaTeX
+    print("\n" + "="*30)
+    print("      FINAL STATISTICS")
+    print("="*30)
+    print(stats)
+
+    # Xuất Table LaTeX
     latex_table = stats.pivot(index='Scenario', columns='Method', values=['mean', 'std'])
-    print("\n--- LaTeX TABLE CODE ---")
-    print(latex_table.to_latex(float_format="%.4f"))
     with open("results/table_results.tex", "w") as f:
         f.write(latex_table.to_latex(float_format="%.4f"))
 
-    # 3. Xuất Figure PDF (Error Bars)
+    # Vẽ Figure PDF
     with PdfPages('results/accuracy_comparison.pdf') as pdf:
         plt.figure(figsize=(10, 6))
         for mode in MODES:
             subset = stats[stats['Method'] == mode]
             plt.errorbar(subset['Scenario'], subset['mean'], yerr=subset['std'], 
                          fmt='o-', capsize=5, label=f"Method: {mode.upper()}")
-        
         plt.title("Classification Accuracy: CGA-VQM vs Raw-VQC (Mean ± Std)")
         plt.ylabel("Accuracy")
-        plt.ylim(0.3, 1.0)
+        plt.ylim(0.2, 1.0)
         plt.grid(True, linestyle='--', alpha=0.7)
         plt.legend()
         pdf.savefig()
-        plt.close()
-
-    # 4. Lưu CSV để backup
+    
     stats.to_csv("results/final_stats.csv", index=False)
-    print("\n[Done] All figures and tables are saved in results/")
+    print(f"\n[Success] Benchmark finished. See results/ folder.")
