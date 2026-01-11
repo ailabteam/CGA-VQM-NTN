@@ -1,0 +1,7 @@
+Scenario,Method,mean,std
+clean,cga,1.0,0.0
+clean,raw,1.0,0.0
+noisy,cga,1.0,0.0
+noisy,raw,1.0,0.0
+rotated,cga,0.6944444444444445,0.10183501544346307
+rotated,raw,0.5166666666666666,0.07264831572567787
