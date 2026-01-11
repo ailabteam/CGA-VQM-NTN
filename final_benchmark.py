@@ -10,9 +10,9 @@ from src.cga_utils import CGAMapper
 from src.quantum_model import CGA_VQC, quantum_classifier
 
 # --- CONFIGURATION (Chốt thông số từ Debug thành công) ---
-SCENARIOS = ['rotated', 'clean', 'noisy']
+SCENARIOS = ['rotated', 'noisy', 'clean']
 MODES = ['raw', 'cga']
-N_TRIALS = 3  # Số lần chạy để tính Mean +/- Std
+N_TRIALS = 1  # Số lần chạy để tính Mean +/- Std
 N_SAMPLES = 100
 EPOCHS = 60    # Tăng lên 60 để hội tụ sâu hơn
 LR = 0.05
